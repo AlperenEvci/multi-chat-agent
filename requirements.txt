@@ -1,0 +1,12 @@
+langchain
+langchain-google-genai
+langchain-community  # For tools like DuckDuckGo
+python-dotenv       # To load API keys from .env
+duckduckgo-search   # The library for the search tool
+langchainhub        # To easily pull standard prompts
+streamlit           # For the web interface
+psycopg2-binary     # For PostgreSQL connection
+langchain-groq      # For Groq API (fast Llama models)
+langchain-experimental # For tools like PythonREPLTool
+google.generativeai # For Gemini API    
+google-cloud-aiplatform # For Vertex AI models like Imagen
