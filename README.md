@@ -2,7 +2,7 @@
 
 This project implements a conversational AI agent using Python, Streamlit, and LangChain. It features:
 
-- **Multi-Model Support:** Easily switch between different large language models (LLMs) from various providers like Google (Gemini) and Groq (Llama 3).
+- **Multi-Model Support:** Easily switch between different large language models (LLMs) from providers like Google (Gemini) and models accessed via OpenRouter (DeepSeek, Gemma).
 - **Conversational Interface:** Chat with the AI agent through a user-friendly Streamlit web interface.
 - **Persistent Conversations:** Chat history is saved to a PostgreSQL database, allowing you to resume conversations later.
 - **Agent Tools:** The agent can use tools like Web Search (DuckDuckGo) and a Python REPL to answer questions and perform tasks.
@@ -25,7 +25,7 @@ This project implements a conversational AI agent using Python, Streamlit, and L
 - **LangChain:** Framework for building LLM applications (agents, prompts, tools).
 - **LangChain Providers:**
   - `langchain-google-genai` (for Gemini models)
-  - `langchain-groq` (for Llama 3 via Groq API)
+  - `langchain-openai` (for models via OpenRouter like DeepSeek, Gemma)
 - **Google Cloud AI Platform:** For Imagen image generation (`google-cloud-aiplatform`).
 - **PostgreSQL:** Relational database for storing conversations.
 - `psycopg2-binary`: Python adapter for PostgreSQL.
@@ -43,7 +43,7 @@ This project implements a conversational AI agent using Python, Streamlit, and L
 - Google Cloud SDK (`gcloud` CLI) installed ([installation guide](https://cloud.google.com/sdk/docs/install)) for Imagen authentication.
 - API Keys:
   - Google AI API Key (for Gemini models)
-  - Groq API Key (for Llama 3 models)
+  - OpenRouter API Key (for DeepSeek, Gemma models)
 - Google Cloud Project set up with Vertex AI API enabled (for Imagen).
 
 **2. Clone the Repository:**
@@ -80,7 +80,7 @@ pip install -r requirements.txt
   ```dotenv
   # API Keys
   GOOGLE_API_KEY="YOUR_GOOGLE_AI_API_KEY"
-  GROQ_API_KEY="YOUR_GROQ_API_KEY"
+  OPENROUTER_API_KEY="YOUR_OPENROUTER_API_KEY"
 
   # PostgreSQL Database Credentials
   POSTGRES_DB="your_database_name"

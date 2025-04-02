@@ -25,8 +25,9 @@ AVAILABLE_MODELS = [
     "gemini-1.5-pro",
     "gemini-1.5-flash",
     "gemini-2.5-pro-exp-03-25",
-    "llama3-8b-8192",   # Groq Llama3 8B
-    "llama3-70b-8192",  # Groq Llama3 70B
+    "deepseek-chat",    # DeepSeek Chat
+    "deepseek-coder",   # DeepSeek Coder
+    "gemma",            # Google Gemma 3 4B
 ]
 
 # --- Page Selection ---

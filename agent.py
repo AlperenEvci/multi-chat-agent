@@ -3,8 +3,9 @@ import os
 from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
 # Import necessary chat model classes
-from langchain_groq import ChatGroq
-# from langchain_openai import ChatOpenAI # Keep commented out unless needed
+# from langchain_groq import ChatGroq # REMOVED
+from langchain_openai import ChatOpenAI  # We'll use this for OpenRouter and Groq
+# from groq import Groq  # REMOVED
 # from langchain_anthropic import ChatAnthropic # Keep commented out unless needed
 # from langchain_community.chat_models import ChatOllama # Keep commented out unless needed
 
@@ -12,6 +13,8 @@ from langchain.agents import AgentExecutor, create_react_agent
 from langchain import hub # Hub for prompt templates
 from tools import agent_tools # Import the tools we defined
 import logging # Import logging
+# Import message types for the custom wrapper
+# from langchain_core.messages import BaseMessage # REMOVED
 
 def create_agent_executor(model_name: str = "gemini-2.5-pro-exp-03-25"):
     """Creates the LangChain agent executor with a specified model from various providers."""
@@ -30,17 +33,55 @@ def create_agent_executor(model_name: str = "gemini-2.5-pro-exp-03-25"):
                 google_api_key=os.getenv("GOOGLE_API_KEY")
             )
             logging.info(f"Initialized Google Generative AI with model: {model_name}")
-        elif model_name.startswith("llama3"):
-             # Check if Groq API key exists
-             groq_api_key = os.getenv("GROQ_API_KEY")
-             if not groq_api_key:
-                 raise ValueError("GROQ_API_KEY not found in environment variables.")
-             llm = ChatGroq(
-                 model_name=model_name,
-                 temperature=0.7,
-                 groq_api_key=groq_api_key
-             )
-             logging.info(f"Initialized ChatGroq with model: {model_name}")
+        # REMOVED Llama/Groq block
+        # elif model_name.startswith("llama"):
+            # ... (Groq initialization code removed) ...
+            
+        elif model_name.startswith("gemma"):
+            # Check if OpenRouter API key exists
+            openrouter_api_key = os.getenv("OPENROUTER_API_KEY")
+            if not openrouter_api_key:
+                raise ValueError("OPENROUTER_API_KEY not found in environment variables.")
+            
+            # Initialize ChatOpenAI with OpenRouter configuration for Gemma
+            llm = ChatOpenAI(
+                model="google/gemma-3-4b-it:free",
+                temperature=0.7,
+                openai_api_key=openrouter_api_key,
+                base_url="https://openrouter.ai/api/v1",
+                default_headers={
+                    "HTTP-Referer": "https://github.com/yourusername/your-repo",
+                    "X-Title": "Your App Name"
+                }
+            )
+            logging.info(f"Initialized Gemma via OpenRouter with model: {model_name}")
+        elif model_name.startswith("deepseek"):
+            # Check if OpenRouter API key exists
+            openrouter_api_key = os.getenv("OPENROUTER_API_KEY")
+            if not openrouter_api_key:
+                raise ValueError("OPENROUTER_API_KEY not found in environment variables.")
+            
+            # Map DeepSeek model names to OpenRouter model names
+            model_mapping = {
+                "deepseek-chat": "deepseek/deepseek-r1:free",
+                "deepseek-coder": "deepseek/deepseek-r1:free"
+            }
+            
+            # Get the OpenRouter model name
+            openrouter_model = model_mapping.get(model_name, model_name)
+            
+            # Initialize ChatOpenAI with OpenRouter configuration
+            llm = ChatOpenAI(
+                model=openrouter_model,
+                temperature=0.7,
+                openai_api_key=openrouter_api_key,
+                base_url="https://openrouter.ai/api/v1",
+                default_headers={
+                    "HTTP-Referer": "https://github.com/yourusername/your-repo",  # Replace with your repo URL
+                    "X-Title": "Your App Name"  # Replace with your app name
+                }
+            )
+            logging.info(f"Initialized DeepSeek via OpenRouter with model: {model_name}")
         # --- Add other providers here as elif blocks --- 
         # elif model_name.startswith("gpt-"):
         #     openai_api_key = os.getenv("OPENAI_API_KEY")
@@ -104,7 +145,7 @@ def create_agent_executor(model_name: str = "gemini-2.5-pro-exp-03-25"):
 
 if __name__ == '__main__':
     # Updated test block
-    models_to_test = ["gemini-1.5-flash", "llama3-8b-8192"] # Add Groq model
+    models_to_test = ["gemini-1.5-flash", "llama3-8b-8192", "deepseek-chat"] # Add DeepSeek model
     print("--- Running Agent Creation Tests ---")
     for model in models_to_test:
         print(f"Testing with model: {model}...")
@@ -117,6 +158,9 @@ if __name__ == '__main__':
                 continue
             if model.startswith("llama3") and not os.getenv("GROQ_API_KEY"):
                 print(f"Skipping {model}: GROQ_API_KEY not found.")
+                continue
+            if model.startswith("deepseek") and not os.getenv("OPENROUTER_API_KEY"):
+                print(f"Skipping {model}: OPENROUTER_API_KEY not found.")
                 continue
 
             executor = create_agent_executor(model_name=model)
