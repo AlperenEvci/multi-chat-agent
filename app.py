@@ -11,6 +11,7 @@ from database import (
 )
 import sys
 import logging # Import logging
+import time
 # Import message types for chat history
 from langchain_core.messages import HumanMessage, AIMessage
 # Import NEW image generation functions for Imagen
@@ -19,6 +20,200 @@ from image_generation import (
     generate_images_with_imagen, 
     process_imagen_response
 )
+
+# --- Custom Theme Configuration ---
+st.set_page_config(
+    page_title="AI Assistant",
+    page_icon="🤖",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Custom CSS
+st.markdown("""
+    <style>
+    /* Global styles */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    
+    * {
+        font-family: 'Inter', sans-serif;
+    }
+    
+    /* Main container styling */
+    .main {
+        background: #1a1a1a;
+        color: #ffffff;
+    }
+    
+    /* Sidebar styling */
+    .css-1d391kg, [data-testid="stSidebar"] {
+        background: #2d2d2d;
+        color: #ffffff;
+    }
+    
+    /* Selectbox styling */
+    .stSelectbox > div > div {
+        background: #3d3d3d !important;
+        color: #ffffff !important;
+        border: 1px solid #4d4d4d !important;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+    
+    .stSelectbox > div > div:hover {
+        border-color: #2196f3 !important;
+    }
+    
+    /* Dropdown menu styling */
+    .stSelectbox > div > div > div[data-baseweb="select"] > div {
+        background: #3d3d3d !important;
+        color: #ffffff !important;
+    }
+    
+    /* Dropdown options styling */
+    div[data-baseweb="popover"] * {
+        background: #3d3d3d !important;
+        color: #ffffff !important;
+    }
+    
+    div[data-baseweb="popover"] div[role="option"]:hover {
+        background: #4d4d4d !important;
+    }
+    
+    /* Settings text color */
+    .sidebar .block-container {
+        color: #ffffff;
+    }
+    
+    /* Headers in sidebar */
+    .sidebar h1, .sidebar h2, .sidebar h3 {
+        color: #ffffff !important;
+    }
+    
+    /* Paragraph text in sidebar */
+    .sidebar p {
+        color: #cccccc !important;
+    }
+    
+    /* Button styling */
+    .stButton>button {
+        background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+        color: white;
+        border: none;
+    }
+    
+    /* Chat message styling */
+    .stChatMessage {
+        background: #2d2d2d;
+        color: #ffffff;
+    }
+    
+    .stChatMessage[data-testid="user"] {
+        background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+    }
+    
+    .stChatMessage[data-testid="assistant"] {
+        background: linear-gradient(135deg, #3d3d3d 0%, #2d2d2d 100%);
+    }
+    
+    /* Chat input styling */
+    .stChatInput, .stTextInput>div>div>input {
+        background: #3d3d3d !important;
+        color: #ffffff !important;
+        border: 1px solid #4d4d4d !important;
+    }
+    
+    .stChatInput:focus, .stTextInput>div>div>input:focus {
+        border-color: #2196f3 !important;
+        box-shadow: 0 0 0 2px rgba(33,150,243,0.2) !important;
+    }
+    
+    /* Header styling */
+    .header {
+        background: #2d2d2d;
+        color: #ffffff;
+    }
+    
+    .header h1, .header h2 {
+        color: #2196f3 !important;
+        -webkit-background-clip: initial;
+        -webkit-text-fill-color: initial;
+    }
+    
+    .header p {
+        color: #cccccc !important;
+    }
+    
+    /* Model card styling */
+    .model-card {
+        background: #2d2d2d;
+        border: 1px solid #4d4d4d;
+        color: #ffffff;
+    }
+    
+    /* Conversation card styling */
+    .conversation-card {
+        background: #2d2d2d;
+        border: 1px solid #4d4d4d;
+        color: #ffffff;
+    }
+    
+    /* Form styling */
+    .stForm {
+        background: #2d2d2d;
+        color: #ffffff;
+    }
+    
+    /* Text area styling */
+    .stTextArea textarea {
+        background: #3d3d3d !important;
+        color: #ffffff !important;
+        border: 1px solid #4d4d4d !important;
+    }
+    
+    /* Expander styling */
+    .streamlit-expanderHeader {
+        background: #2d2d2d !important;
+        color: #ffffff !important;
+        border: 1px solid #4d4d4d !important;
+    }
+    
+    /* Scrollbar styling */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+        background: #1a1a1a;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: #2d2d2d;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: #4d4d4d;
+        border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: #5d5d5d;
+    }
+    
+    /* Radio button styling */
+    .stRadio > div {
+        color: #ffffff !important;
+    }
+    
+    /* Markdown text color */
+    .stMarkdown {
+        color: #ffffff;
+    }
+    
+    /* Info, Success, Error message styling */
+    .stSuccess, .stInfo, .stError {
+        color: #ffffff !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
 # --- Available Models ---
 AVAILABLE_MODELS = [
@@ -30,14 +225,35 @@ AVAILABLE_MODELS = [
     "gemma",            # Google Gemma 3 4B
 ]
 
+# Model descriptions
+MODEL_DESCRIPTIONS = {
+    "gemini-1.5-pro": "Google's advanced model for complex tasks",
+    "gemini-1.5-flash": "Fast and efficient for quick responses",
+    "gemini-2.5-pro-exp-03-25": "Latest experimental version with enhanced capabilities",
+    "deepseek-chat": "Specialized for general conversation",
+    "deepseek-coder": "Optimized for programming and technical tasks",
+    "gemma": "Google's lightweight but powerful model"
+}
+
 # --- Page Selection ---
 if 'current_page' not in st.session_state:
     st.session_state.current_page = "Chat"
 
 # --- Sidebar Navigation ---
 with st.sidebar:
-    st.title("Navigation")
-    page = st.radio("Go to", ["Chat", "Image Generation"])
+    st.markdown("""
+        <div class="header">
+            <h1 style="color: #2196f3;">🤖 AI Assistant</h1>
+            <p style="color: #666;">Your intelligent companion</p>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    page = st.radio(
+        "Navigation",
+        ["Chat", "Image Generation"],
+        format_func=lambda x: "💬 Chat" if x == "Chat" else "🎨 Image Generation"
+    )
+    
     if page != st.session_state.current_page:
         st.session_state.current_page = page
         st.rerun()
@@ -58,8 +274,12 @@ def setup_agent(model_name: str):
 # --- Main App Content ---
 if st.session_state.current_page == "Chat":
     # --- Chat Interface ---
-    st.title("🤖 AI Agent Chat")
-    st.caption("Your personal AI assistant with conversation history and multi-provider model selection.")
+    st.markdown("""
+        <div class="header">
+            <h2 style="color: #2196f3;">💬 AI Chat</h2>
+            <p style="color: #666;">Ask anything to your AI assistant</p>
+        </div>
+    """, unsafe_allow_html=True)
 
     # --- Session State Initialization ---
     if 'current_conversation_id' not in st.session_state:
@@ -77,23 +297,26 @@ if st.session_state.current_page == "Chat":
 
     # --- Model Selection ---
     with st.sidebar:
-        st.header("Settings")
+        st.markdown("### 🛠️ Settings")
+        
+        # Model selection with description
         selected_model = st.selectbox(
             "Choose AI Model",
             options=AVAILABLE_MODELS,
             index=AVAILABLE_MODELS.index(st.session_state.selected_model),
-            key="model_selector"
+            key="model_selector",
+            format_func=lambda x: f"{x} - {MODEL_DESCRIPTIONS[x]}"
         )
 
         if selected_model != st.session_state.selected_model:
             st.session_state.selected_model = selected_model
             st.rerun()
 
-        st.divider()
-        st.header("Conversations")
+        st.markdown("---")
+        st.markdown("### 💭 Conversations")
 
         # Button to create a new conversation
-        if st.button("➕ New Conversation"):
+        if st.button("➕ New Conversation", key="new_conv"):
             refresh_conversations()
             num_conversations = len(st.session_state.conversations_list)
             new_conv_name = f"Conversation {num_conversations + 1}"
@@ -106,71 +329,61 @@ if st.session_state.current_page == "Chat":
             else:
                 st.error("Failed to create new conversation. Check logs.")
 
-        st.divider()
-
         # Refresh and display list of conversations
         if not st.session_state.conversations_list:
             refresh_conversations()
 
         if not st.session_state.conversations_list:
-            st.write("No conversations yet.")
+            st.info("No conversations yet. Start a new one!")
         else:
-            # Display conversations as clickable buttons/elements
             for conv in st.session_state.conversations_list:
                 conv_id = conv["id"]
-                # Use the name from DB directly, it should have the desired format now
                 conv_name = conv["name"]
-                # Use columns for layout: button and delete icon
-                col1, col2 = st.columns([0.8, 0.2])
-                with col1:
-                     if st.button(conv_name, key=f"conv_{conv_id}", use_container_width=True,
-                                  type=("primary" if conv_id == st.session_state.current_conversation_id else "secondary")):
-                        st.session_state.current_conversation_id = conv_id
-                        # Load messages for the selected conversation
-                        st.session_state.messages = get_messages(conv_id)
-                        st.rerun()
-                with col2:
-                    if st.button("🗑️", key=f"del_{conv_id}", help="Delete conversation"):
-                        deleted = delete_conversation(conv_id)
-                        if deleted:
-                            # If deleting the current conversation, reset selection
-                            if conv_id == st.session_state.current_conversation_id:
-                                st.session_state.current_conversation_id = None
-                                st.session_state.messages = []
-                            refresh_conversations()
+                
+                # Create a container for each conversation
+                with st.container():
+                    col1, col2 = st.columns([0.8, 0.2])
+                    with col1:
+                        if st.button(
+                            conv_name,
+                            key=f"conv_{conv_id}",
+                            use_container_width=True,
+                            type="primary" if conv_id == st.session_state.current_conversation_id else "secondary"
+                        ):
+                            st.session_state.current_conversation_id = conv_id
+                            st.session_state.messages = get_messages(conv_id)
                             st.rerun()
-                        else:
-                            st.error(f"Failed to delete conversation {conv_id}")
-
-        # Attempt to select the latest conversation if none is selected
-        if st.session_state.current_conversation_id is None and st.session_state.conversations_list:
-            st.session_state.current_conversation_id = st.session_state.conversations_list[0]["id"]
-            st.session_state.messages = get_messages(st.session_state.current_conversation_id)
-            # No rerun here to avoid loop if message loading fails
+                    with col2:
+                        if st.button("🗑️", key=f"del_{conv_id}", help="Delete conversation"):
+                            deleted = delete_conversation(conv_id)
+                            if deleted:
+                                if conv_id == st.session_state.current_conversation_id:
+                                    st.session_state.current_conversation_id = None
+                                    st.session_state.messages = []
+                                refresh_conversations()
+                                st.rerun()
+                            else:
+                                st.error(f"Failed to delete conversation {conv_id}")
 
     # --- Get the agent executor based on the selected model ---
-    # This call now depends on the selected model from the sidebar
     agent_executor = setup_agent(st.session_state.selected_model)
 
     # --- Main Chat Area ---
-
-    # Display chat messages based on the selected conversation
     if st.session_state.current_conversation_id:
-        # Reload messages if they are empty for the current conv (e.g., after creation)
         if not st.session_state.messages:
-             st.session_state.messages = get_messages(st.session_state.current_conversation_id)
+            st.session_state.messages = get_messages(st.session_state.current_conversation_id)
 
+        # Display chat messages with improved styling
         for message in st.session_state.messages:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
     else:
         st.info("Select a conversation or start a new one from the sidebar.")
 
-    # Accept user input
+    # Accept user input with improved styling
     if prompt := st.chat_input("What do you want to ask the agent?"):
         if not st.session_state.current_conversation_id:
             st.error("Please select or start a new conversation first!")
-        # Check if agent executor was successfully created for the selected model
         elif not agent_executor:
             st.error(f"Agent could not be initialized for model '{st.session_state.selected_model}'. Please check the logs.")
         else:
@@ -180,13 +393,10 @@ if st.session_state.current_page == "Chat":
             with st.chat_message("user"):
                 st.markdown(prompt)
 
-            # Get agent response
+            # Get agent response with loading animation
             with st.chat_message("assistant"):
-                with st.spinner("Thinking..."):
+                with st.spinner("🤔 Thinking..."):
                     try:
-                        # Prepare chat history for the agent prompt
-                        # Use messages stored in session state, excluding the latest user prompt
-                        # which is passed separately via 'input'
                         chat_history_for_prompt = []
                         raw_messages_for_history = st.session_state.messages[:-1]
                         for msg in raw_messages_for_history:
@@ -195,7 +405,6 @@ if st.session_state.current_page == "Chat":
                             elif msg["role"] == "assistant":
                                 chat_history_for_prompt.append(AIMessage(content=msg["content"]))
 
-                        # Invoke the agent with input and formatted chat history
                         response = agent_executor.invoke({
                             "input": prompt,
                             "chat_history": chat_history_for_prompt
@@ -204,22 +413,21 @@ if st.session_state.current_page == "Chat":
 
                     except Exception as e:
                         response_content = f"An error occurred during agent processing: {e}"
-                        # Log the full traceback for detailed debugging
                         logging.exception("Error during agent invocation:")
 
                     # Add agent response to DB and display
                     add_message(st.session_state.current_conversation_id, "assistant", response_content)
                     st.markdown(response_content)
-                    # Append agent response to session state as well for consistency
                     st.session_state.messages.append({"role": "assistant", "content": response_content})
-                    # Optional: Could reload all messages from DB here for ultimate consistency,
-                    # but appending is faster for UI responsiveness.
-                    # st.session_state.messages = get_messages(st.session_state.current_conversation_id)
-                    # st.rerun() 
+
 else:
     # --- Image Generation Interface (Now using Imagen via AI Platform) ---
-    st.title("🎨 AI Image Generator (Imagen)")
-    st.caption("Generate images using Google Cloud's Imagen model.")
+    st.markdown("""
+        <div class="header">
+            <h2 style="color: #2196f3;">🎨 Image Generation</h2>
+            <p style="color: #666;">Create amazing images with AI</p>
+        </div>
+    """, unsafe_allow_html=True)
 
     # Initialize session state for image history
     if 'image_history' not in st.session_state:
@@ -233,74 +441,72 @@ else:
         # It will show specific errors like missing project ID or library
         pass # Prevent Streamlit from crashing if setup fails
     else:
-        # Image generation form
+        # Image generation form with improved styling
         with st.form("image_generation_form"):
+            st.markdown("### 🎯 Image Description")
             prompt = st.text_area(
                 "Describe the image you want to generate",
                 placeholder="A photorealistic cat wearing sunglasses...",
                 height=100
             )
             
-            # Additional parameters
+            st.markdown("### ⚙️ Generation Settings")
             col1, col2 = st.columns(2)
             with col1:
-                num_images = st.number_input("Number of images to generate", min_value=1, max_value=8, value=1) # Imagen allows up to 8
+                num_images = st.number_input(
+                    "Number of images",
+                    min_value=1,
+                    max_value=8,
+                    value=1,
+                    help="How many variations to generate"
+                )
             with col2:
                 style = st.selectbox(
-                    "Image Style (influences prompt)",
-                    ["Realistic", "Photographic", "Artistic", "Cartoon", "Abstract", "Watercolor", "Oil Painting"]
+                    "Image Style",
+                    ["Realistic", "Photographic", "Artistic", "Cartoon", "Abstract", "Watercolor", "Oil Painting"],
+                    help="The artistic style of the generated images"
                 )
             
-            submitted = st.form_submit_button("Generate Images")
+            submitted = st.form_submit_button("✨ Generate Images")
 
         if submitted and prompt:
-            with st.spinner("Generating images with Imagen..."):
+            with st.spinner("🎨 Creating your images..."):
                 try:
-                    # Call the new Imagen generation function
                     api_response = generate_images_with_imagen(
-                        prompt=prompt, 
-                        num_images=num_images, 
+                        prompt=prompt,
+                        num_images=num_images,
                         style=style
                     )
                     
-                    # Process the response using the new Imagen processing function
                     if api_response:
                         processed_images = process_imagen_response(api_response)
                     else:
-                        processed_images = None # API call failed before processing
+                        processed_images = None
                     
                     if processed_images:
-                        # Add to history
                         st.session_state.image_history.append({
                             "prompt": prompt,
                             "style": style,
-                            "timestamp": "Now" # Consider using datetime
+                            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
                         })
                         
-                        # Display the generated images
-                        st.success(f"{len(processed_images)} image(s) generated successfully with Imagen!")
+                        st.success(f"✨ Successfully generated {len(processed_images)} image(s)!")
                         
-                        # Display images in a grid
-                        cols = st.columns(len(processed_images)) # Display all generated images
+                        # Display images in a grid with improved styling
+                        cols = st.columns(len(processed_images))
                         for idx, (col, img) in enumerate(zip(cols, processed_images)):
                             with col:
-                                st.image(img, caption=f"Generated Image {idx + 1}")
+                                st.image(img, caption=f"Image {idx + 1}")
                     else:
-                        # Error message displayed by generate_images_with_imagen or process_imagen_response
-                        st.warning("Failed to generate or process images. Check the logs for details.") 
-                        # No need for extra error here as functions already log/st.error
+                        st.warning("Failed to generate or process images. Check the logs for details.")
                 
                 except Exception as e:
-                    # Catch any unexpected error during the Streamlit flow
-                    st.error(f"An unexpected error occurred in the application: {e}")
-                    logging.exception("Unexpected error in Streamlit image generation flow:")
+                    st.error(f"An unexpected error occurred: {e}")
+                    logging.exception("Error in image generation:")
 
-        # Display image generation history
+        # Display image generation history with improved styling
         if st.session_state.image_history:
-            st.divider()
-            st.subheader("Generation History")
-            
+            st.markdown("### 📜 Generation History")
             for entry in reversed(st.session_state.image_history):
-                with st.expander(f"Prompt: {entry['prompt']} ({entry['style']})"):
-                    st.write(f"Generated at: {entry['timestamp']}")
-                    # You could add more details here if needed 
+                with st.expander(f"🎨 {entry['prompt']} ({entry['style']})"):
+                    st.write(f"⏰ Generated at: {entry['timestamp']}") 
