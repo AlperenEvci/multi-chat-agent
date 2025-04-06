@@ -3,36 +3,53 @@ import psycopg2
 import os
 from dotenv import load_dotenv
 import logging
+from pathlib import Path
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# Load environment variables for database connection
-load_dotenv()
+# Load environment variables from .env file
+env_path = Path('.') / '.env'
+load_dotenv(dotenv_path=env_path)
 
-DB_HOST = os.getenv("DB_HOST", "localhost")
+# Debug: Print connection details (remove in production)
+print("Current working directory:", os.getcwd())
+print("Environment variables loaded from:", env_path.absolute())
+print("Connection details:")
+print(f"DB_HOST: {os.getenv('DB_HOST', 'not set')}")
+print(f"DB_PORT: {os.getenv('DB_PORT', 'not set')}")
+print(f"DB_NAME: {os.getenv('DB_NAME', 'not set')}")
+print(f"DB_USER: {os.getenv('DB_USER', 'not set')}")
+
+# Supabase connection settings
+DB_HOST = os.getenv("DB_HOST", "db.huryxssotspbdipdbsuq.supabase.co")
 DB_PORT = os.getenv("DB_PORT", "5432")
-DB_NAME = os.getenv("DB_NAME")
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_NAME = os.getenv("DB_NAME", "postgres")
+DB_USER = os.getenv("DB_USER", "postgres")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "35UIhZuziqZNiE55")
 
 # --- Connection Function ---
 def get_db_connection():
-    """Establishes a connection to the PostgreSQL database."""
+    """Establishes a connection to the Supabase PostgreSQL database."""
+    if not all([DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD]):
+        logging.error("Missing database configuration. Please check your .env file.")
+        return None
+
     conn = None
     try:
+        # Use connection parameters directly instead of connection string
         conn = psycopg2.connect(
             host=DB_HOST,
             port=DB_PORT,
             dbname=DB_NAME,
             user=DB_USER,
-            password=DB_PASSWORD
+            password=DB_PASSWORD,
+            sslmode='verify-full'
         )
         logging.info("Database connection established successfully.")
     except psycopg2.OperationalError as e:
         logging.error(f"Database connection error: {e}")
-        # In a real app, you might want to handle this more gracefully
-        # For Streamlit, we might let it fail and show an error in the UI
+        raise
     return conn
 
 # --- Database Initialization ---
