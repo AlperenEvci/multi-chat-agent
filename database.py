@@ -12,14 +12,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 def get_db_connection():
     """Establishes a connection to the PostgreSQL database."""
     try:
-        # Get database connection details from Streamlit secrets
-        conn = psycopg2.connect(
-            host=st.secrets["database"]["DB_HOST"],
-            port=st.secrets["database"]["DB_PORT"],
-            dbname=st.secrets["database"]["DB_NAME"],
-            user=st.secrets["database"]["DB_USER"],
-            password=st.secrets["database"]["DB_PASSWORD"]
-        )
+        conn = psycopg2.connect(st.secrets["database"]["DATABASE_URL"])
         logging.info(f"Database connection established successfully to {st.secrets['database']['DB_HOST']}")
         return conn
     except OperationalError as e:
