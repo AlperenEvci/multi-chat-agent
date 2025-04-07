@@ -1,15 +1,15 @@
 langchain
 langchain-google-genai
-langchain-community  # For tools like DuckDuckGo
-# langchain-groq      # REMOVED
-python-dotenv       # To load API keys from .env
-duckduckgo-search   # The library for the search tool
-langchainhub        # To easily pull standard prompts
-streamlit           # For the web interface
-psycopg2-binary     # For PostgreSQL connection
-langchain-experimental # For tools like PythonREPLTool
-google.generativeai # For Gemini API    
-google-cloud-aiplatform # For Vertex AI models like Imagen
-langchain-openai    # For OpenRouter integration (and potentially OpenAI later)
-openai              # For OpenAI API format
-# groq                # REMOVED
+langchain-community
+python-dotenv
+duckduckgo-search
+langchainhub
+streamlit
+psycopg2-binary
+langchain-experimental
+google.generativeai
+google-cloud-aiplatform
+langchain-openai
+openai
+groq
+deepseek-ai
