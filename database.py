@@ -3,6 +3,7 @@ import psycopg2
 import os
 import logging
 import streamlit as st
+from psycopg2 import OperationalError
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -17,21 +18,23 @@ DB_PASSWORD = st.secrets["database"]["DB_PASSWORD"]
 # --- Connection Function ---
 def get_db_connection():
     """Establishes a connection to the PostgreSQL database."""
-    conn = None
     try:
+        # Get database connection details from Streamlit secrets
         conn = psycopg2.connect(
-            host=DB_HOST,
-            port=DB_PORT,
-            dbname=DB_NAME,
-            user=DB_USER,
-            password=DB_PASSWORD
+            host=st.secrets["database"]["DB_HOST"],
+            port=st.secrets["database"]["DB_PORT"],
+            dbname=st.secrets["database"]["DB_NAME"],
+            user=st.secrets["database"]["DB_USER"],
+            password=st.secrets["database"]["DB_PASSWORD"]
         )
-        logging.info("Database connection established successfully.")
-    except psycopg2.OperationalError as e:
+        logging.info(f"Database connection established successfully to {st.secrets['database']['DB_HOST']}")
+        return conn
+    except OperationalError as e:
         logging.error(f"Database connection error: {e}")
-        # In a real app, you might want to handle this more gracefully
-        # For Streamlit, we might let it fail and show an error in the UI
-    return conn
+        return None
+    except Exception as e:
+        logging.error(f"Unexpected error while connecting to database: {e}")
+        return None
 
 # --- Database Initialization ---
 def initialize_database():
