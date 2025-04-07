@@ -8,13 +8,6 @@ from psycopg2 import OperationalError
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# Get database connection details from Streamlit secrets
-DB_HOST = st.secrets["database"]["DB_HOST"]
-DB_PORT = st.secrets["database"]["DB_PORT"]
-DB_NAME = st.secrets["database"]["DB_NAME"]
-DB_USER = st.secrets["database"]["DB_USER"]
-DB_PASSWORD = st.secrets["database"]["DB_PASSWORD"]
-
 # --- Connection Function ---
 def get_db_connection():
     """Establishes a connection to the PostgreSQL database."""
