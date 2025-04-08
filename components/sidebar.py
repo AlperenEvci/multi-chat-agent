@@ -73,7 +73,7 @@ def display_conversations():
         st.info("No conversations yet. Start a new one!")
     else:
         for conv in st.session_state[SESSION_KEYS["conversations_list"]]:
-            conv_id = conv["id"]
+            conv_id = conv["_id"]
             conv_name = conv["name"]
             
             with st.container():
@@ -98,4 +98,4 @@ def display_conversations():
                             refresh_conversations()
                             st.rerun()
                         else:
-                            st.error(f"Failed to delete conversation {conv_id}") 
+                            st.error("Failed to delete conversation. Check logs.") 
