@@ -13,3 +13,4 @@ langchain-openai
 openai
 groq
 deepseek-ai
+pymongo
